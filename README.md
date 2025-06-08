@@ -1,6 +1,6 @@
 # oscv
 
-**oscv** turns your Linux terminal into a real-time stereo waveform visualizer
+**oscv** turns your Linux terminal into an oscilloscope
 
 
 ## Features
@@ -14,9 +14,9 @@
 Requirements: Python 3.7+, `pactl`, `sounddevice`, `blessed`, `numpy`
 
 ```bash
-git clone https://github.com/yourusername/oscv
+git clone https://github.com/ianshapiro1/oscv.git
 cd oscv
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
-python oscv.py
+python oscilloscope.py
