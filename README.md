@@ -9,8 +9,6 @@
 - Pulls audio from your system's monitor source
 - Color-coded waveform for left/right/overlap
 
----
-
 ## Quick Start
 
 Requirements: Python 3.7+, `pactl`, `sounddevice`, `blessed`, `numpy`
