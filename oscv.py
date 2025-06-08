@@ -1,34 +1,75 @@
-import sounddevice as sd
 import numpy as np
 from blessed import Terminal
 import subprocess
 import time
-import sys
 
 term = Terminal()
-WIDTH, HEIGHT = term.width, term.height - 5
+SAMPLE_RATE = 44100
+CHANNELS = 2
+CHUNK = 1024
+BYTES_PER_SAMPLE = 2
+FRAME_BYTES = CHUNK * CHANNELS * BYTES_PER_SAMPLE
+
+#####################
+###  GET MONITOR  ###
+#####################
+
+def list_monitor_sources():
+    try:
+        output = subprocess.check_output(["pactl", "list", "sources"], text=True)
+    except FileNotFoundError:
+        raise RuntimeError("pactl not found")
+
+    monitors = []
+    current = {}
+    for line in output.splitlines():
+        line = line.strip()
+        if line.startswith("Source #"):
+            if current.get("name", "").endswith(".monitor"):
+                monitors.append(current)
+            current = {}
+        elif line.startswith("Name:"):
+            current["name"] = line.split(":", 1)[1].strip()
+        elif line.startswith("Description:"):
+            current["desc"] = line.split(":", 1)[1].strip()
+
+    if current.get("name", "").endswith(".monitor"):
+        monitors.append(current)
+    return monitors
+
+
+def get_default_sink_monitor():
+    try:
+        sink = subprocess.check_output(["pactl", "get-default-sink"], text=True).strip()
+    except subprocess.CalledProcessError:
+        return None
+
+    monitors = list_monitor_sources()
+    for m in monitors:
+        if m["name"].startswith(sink) and m["name"].endswith(".monitor"):
+            return m
+    return None
+
 
 def get_monitor_device():
-    default_sink = subprocess.check_output(
-        ["pactl", "get-default-sink"], text=True
-    ).strip()
+    mon = get_default_sink_monitor()
+    if mon:
+        print(f"Auto-selected monitor: {mon['desc']} ({mon['name']})")
+        answer = input("Use this monitor? [Y/n]: ").strip().lower()
+        if answer in ("", "y", "yes"):
+            return mon["name"]
 
-    sources = subprocess.check_output(["pactl", "list", "sources"], text=True)
+    monitors = list_monitor_sources()
+    print("\nAvailable monitor sources:\n")
+    for i, m in enumerate(monitors):
+        print(f"{i+1}. {m['desc']} ({m['name']})")
+    idx = int(input("\nSelect a monitor source by number: ")) - 1
+    return monitors[idx]["name"]
 
-    monitor_name = None
-    current_source = {}
-    for line in sources.splitlines():
-        line = line.strip()
-        if line.startswith("Name:"):
-            current_source["name"] = line.split(":", 1)[1].strip()
-        elif line.startswith("Device Description:"):
-            current_source["desc"] = line.split(":", 1)[1].strip()
-            # Check if source is the monitor of default sink
-            if current_source.get("name", "").endswith(".monitor") and default_sink in current_source.get("name", ""):
-                monitor_name = current_source["name"]
-                break
 
-    return monitor_name
+####################
+###  DRAW WAVES  ###
+####################
 
 def normalize(samples, height):
     max_val = np.max(np.abs(samples))
@@ -57,31 +98,34 @@ def draw_waveform(stereo_frame):
                 line += " "
         print(line)
 
-def audio_callback(indata, frames, time, status):
-    if status:
-        print(status, file=sys.stderr)
-    if frames == 0:
-        return
-    draw_waveform(indata.copy())
-
 def main():
-    monitor = get_monitor_device()
-    print(f"Using audio source: {monitor}")
+    monitor_name = get_monitor_device()
+    print(f"Using audio source: {monitor_name}")
 
-    try: 
-        with sd.InputStream(
-            device=monitor,
-            channels=2,
-            samplerate=44100,
-            blocksize=1024,
-            dtype='float32',
-            callback=audio_callback
-        ):
-            with term.cbreak():
-                while True:
-                    time.sleep(0.05)
-    except KeyboardInterrupt:
-        print(term.normal + "\nExiting")
+    cmd = [
+        "ffmpeg",
+        "-f", "pulse",
+        "-i", monitor_name,
+        "-f", "s16le",
+        "-acodec", "pcm_s16le",
+        "-ac", str(CHANNELS),
+        "-ar", str(SAMPLE_RATE),
+        "-"
+    ]
+
+    with subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL) as proc, term.fullscreen(), term.hidden_cursor():
+        try:
+            while True:
+                raw = proc.stdout.read(FRAME_BYTES)
+                if not raw:
+                    break
+                data = np.frombuffer(raw, dtype=np.int16).reshape(-1, CHANNELS)
+                draw_waveform(data)
+                time.sleep(0.01)
+        except KeyboardInterrupt:
+            print(term.normal + "\nExiting")
+        finally:
+            proc.kill()
 
 if __name__ == "__main__":
     main()
