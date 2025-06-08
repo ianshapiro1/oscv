@@ -19,4 +19,4 @@ cd oscv
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
-python oscilloscope.py
+python oscv.py
