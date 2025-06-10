@@ -89,11 +89,11 @@ def draw_waveform(stereo_frame):
         line = ""
         for x in range(len(left_norm)):
             if left_norm[x] == y and right_norm[x] == y:
-                line += term.red("×")
+                line += term.red("█")
             elif left_norm[x] == y:
-                line += term.cyan("L")
+                line += term.cyan("█")
             elif right_norm[x] == y:
-                line += term.magenta("R")
+                line += term.magenta("█")
             else:
                 line += " "
         print(line)
