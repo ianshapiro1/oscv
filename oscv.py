@@ -87,12 +87,12 @@ def normalize(samples, height):
 
 def draw_waveform(stereo_frame):
     WIDTH, HEIGHT = term.width, term.height - 5
-    stereo_frame = stereo_frame[:WIDTH]
+    stereo_frame = stereo_frame[:min(WIDTH, stereo_frame.shape[0])]
     left, right = stereo_frame[:, 0], stereo_frame[:, 1]
     left_norm = normalize(left, HEIGHT)
     right_norm = normalize(right, HEIGHT)
 
-    print(term.home + term.clear, end="")
+    print(term.move_y(0), end="")
     for y in range(HEIGHT - 1, -1, -1):
         line = ""
         for x in range(len(left_norm)):
