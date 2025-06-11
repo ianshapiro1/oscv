@@ -63,7 +63,15 @@ def get_monitor_device():
     print("\nAvailable monitor sources:\n")
     for i, m in enumerate(monitors):
         print(f"{i+1}. {m['desc']} ({m['name']})")
-    idx = int(input("\nSelect a monitor source by number: ")) - 1
+    while True:
+        try:
+            idx = int(input("\nSelect a monitor source by number: ")) - 1
+            if 0 <= idx < len(monitors):
+                return monitors[idx]["name"]
+            else:
+                print("Invalid selection. Please choose a valid number.")
+        except ValueError:
+            print("Please enter a number.")
     return monitors[idx]["name"]
 
 
