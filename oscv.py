@@ -9,6 +9,9 @@ CHANNELS = 2
 CHUNK = 1024
 BYTES_PER_SAMPLE = 2
 FRAME_BYTES = CHUNK * CHANNELS * BYTES_PER_SAMPLE
+FRAME_DELAY = 0.01
+SMOOTHING_WINDOW = 5
+WAVEFORM_VERTICAL_PADDING = 5
 prev_width, prev_height = None, None
 
 #####################
@@ -86,16 +89,31 @@ def normalize(samples, height):
         return np.zeros_like(samples, dtype=int)
     return ((samples / max_val + 1) / 2 * (height - 1)).astype(int)
 
+def resample_to_width(samples, width):
+    if samples.shape[0] == width:
+        return samples
+    else:
+        idx = np.linspace(0, samples.shape[0] - 1, width).astype(int)
+        return samples[idx]
+
+def smooth(samples, window_size=SMOOTHING_WINDOW):
+    if window_size <= 1:
+        return samples
+    kernel = np.ones(window_size) / window_size
+    return np.convolve(samples, kernel, mode='same')
+
 def draw_waveform(stereo_frame):
     global prev_width, prev_height
-    width, height = term.width, term.height - 5
+    width, height = term.width, term.height - WAVEFORM_VERTICAL_PADDING
 
     if (width, height) != (prev_width, prev_height):
-        print(term.clear + term.move(0, 0), end='')  # Clear entire drawing area on resize
+        print(term.clear + term.move(0, 0), end='')
         prev_width, prev_height = width, height
         
-    stereo_frame = stereo_frame[:min(width, stereo_frame.shape[0])]
+    stereo_frame = resample_to_width(stereo_frame, width)
     left, right = stereo_frame[:, 0], stereo_frame[:, 1]
+    left = smooth(left)
+    right = smooth(right)
     left_norm = normalize(left, height)
     right_norm = normalize(right, height)
 
@@ -136,7 +154,7 @@ def main():
                     break
                 data = np.frombuffer(raw, dtype=np.int16).reshape(-1, CHANNELS)
                 draw_waveform(data)
-                time.sleep(0.01)
+                time.sleep(FRAME_DELAY)
         except KeyboardInterrupt:
             print(term.normal + "\nExiting")
         finally:
