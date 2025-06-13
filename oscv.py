@@ -9,6 +9,7 @@ CHANNELS = 2
 CHUNK = 1024
 BYTES_PER_SAMPLE = 2
 FRAME_BYTES = CHUNK * CHANNELS * BYTES_PER_SAMPLE
+prev_width, prev_height = None, None
 
 #####################
 ###  GET MONITOR  ###
@@ -86,14 +87,20 @@ def normalize(samples, height):
     return ((samples / max_val + 1) / 2 * (height - 1)).astype(int)
 
 def draw_waveform(stereo_frame):
-    WIDTH, HEIGHT = term.width, term.height - 5
-    stereo_frame = stereo_frame[:min(WIDTH, stereo_frame.shape[0])]
+    global prev_width, prev_height
+    width, height = term.width, term.height - 5
+
+    if (width, height) != (prev_width, prev_height):
+        print(term.clear + term.move(0, 0), end='')  # Clear entire drawing area on resize
+        prev_width, prev_height = width, height
+        
+    stereo_frame = stereo_frame[:min(width, stereo_frame.shape[0])]
     left, right = stereo_frame[:, 0], stereo_frame[:, 1]
-    left_norm = normalize(left, HEIGHT)
-    right_norm = normalize(right, HEIGHT)
+    left_norm = normalize(left, height)
+    right_norm = normalize(right, height)
 
     print(term.move_y(0), end="")
-    for y in range(HEIGHT - 1, -1, -1):
+    for y in range(height - 1, -1, -1):
         line = ""
         for x in range(len(left_norm)):
             if left_norm[x] == y and right_norm[x] == y:
