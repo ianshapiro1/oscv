@@ -1,4 +1,11 @@
-# oscv
+```
+                                           .▄▄ ·  ▄▄·  ▌ ▐·
+                                     ▪     ▐█ ▀. ▐█ ▌▪▪█·█▌
+                                      ▄█▀▄ ▄▀▀▀█▄██ ▄▄▐█▐█•
+                                     ▐█▌.▐▌▐█▄▪▐█▐███▌ ███ 
+                                      ▀█▄▀▪ ▀▀▀▀ ·▀▀▀ . ▀  
+
+```
 
 **oscv** turns your Linux terminal into an oscilloscope visualizer
 - Live stereo waveform display using color coded L/R channel separation

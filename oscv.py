@@ -1,3 +1,11 @@
+#       .▄▄ ·  ▄▄·  ▌ ▐·
+# ▪     ▐█ ▀. ▐█ ▌▪▪█·█▌
+#  ▄█▀▄ ▄▀▀▀█▄██ ▄▄▐█▐█•
+# ▐█▌.▐▌▐█▄▪▐█▐███▌ ███ 
+#  ▀█▄▀▪ ▀▀▀▀ ·▀▀▀ . ▀  
+
+# author: https://github.com/ianshapiro1
+
 import numpy as np
 from blessed import Terminal
 import subprocess
@@ -11,7 +19,7 @@ BYTES_PER_SAMPLE = 2
 FRAME_BYTES = CHUNK * CHANNELS * BYTES_PER_SAMPLE
 FRAME_DELAY = 0.01
 SMOOTHING_WINDOW = 5
-WAVEFORM_VERTICAL_PADDING = 5
+WAVEFORM_VERTICAL_PADDING = 5 #write a function for this
 prev_width, prev_height = None, None
 
 #####################
